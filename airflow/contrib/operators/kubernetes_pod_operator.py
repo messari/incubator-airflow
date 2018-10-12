@@ -76,6 +76,8 @@ class KubernetesPodOperator(BaseOperator):
         /airflow/xcom/return.json in the container will also be pushed to an
         XCom when the container completes.
     :type xcom_push: bool
+    :param tolerations: Kubernetes tolerations
+    :type list of tolerations
     """
     template_fields = ('cmds', 'arguments', 'env_vars', 'config_file')
 
@@ -106,6 +108,9 @@ class KubernetesPodOperator(BaseOperator):
             pod.annotations = self.annotations
             pod.resources = self.resources
             pod.affinity = self.affinity
+            pod.node_selectors = self.node_selectors
+            pod.hostnetwork = self.hostnetwork
+            pod.tolerations = self.tolerations
 
             launcher = pod_launcher.PodLauncher(kube_client=client,
                                                 extract_xcom=self.xcom_push)
@@ -144,6 +149,12 @@ class KubernetesPodOperator(BaseOperator):
                  affinity=None,
                  config_file=None,
                  xcom_push=False,
+                 node_selectors=None,
+                 image_pull_secrets=None,
+                 service_account_name="default",
+                 is_delete_operator_pod=False,
+                 hostnetwork=False,
+                 tolerations=None,
                  *args,
                  **kwargs):
         super(KubernetesPodOperator, self).__init__(*args, **kwargs)
@@ -167,3 +178,8 @@ class KubernetesPodOperator(BaseOperator):
         self.xcom_push = xcom_push
         self.resources = resources or Resources()
         self.config_file = config_file
+        self.image_pull_secrets = image_pull_secrets
+        self.service_account_name = service_account_name
+        self.is_delete_operator_pod = is_delete_operator_pod
+        self.hostnetwork = hostnetwork
+        self.tolerations = tolerations or []

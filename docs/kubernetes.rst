@@ -82,6 +82,14 @@ Kubernetes Operator
         }
     }
 
+    tolerations = [
+        {
+            'key': "key",
+            'operator': 'Equal',
+            'value': 'value'
+         }
+    ]
+
     k = KubernetesPodOperator(namespace='default',
                               image="ubuntu:16.04",
                               cmds=["bash", "-cx"],
@@ -92,11 +100,13 @@ Kubernetes Operator
                               volume_mounts=[volume_mount]
                               name="test",
                               task_id="task",
-                              affinity=affinity
+                              affinity=affinity,
+                              is_delete_operator_pod=True,
+                              hostnetwork=False,
+                              tolerations=tolerations
                               )
 
 
 .. autoclass:: airflow.contrib.operators.kubernetes_pod_operator.KubernetesPodOperator
 
 .. autoclass:: airflow.contrib.kubernetes.secret.Secret
-

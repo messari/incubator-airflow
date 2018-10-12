@@ -38,6 +38,14 @@ try:
         default_args=args,
         schedule_interval=None)
 
+    tolerations = [
+        {
+            'key': "key",
+            'operator': 'Equal',
+            'value': 'value'
+        }
+    ]
+
     k = KubernetesPodOperator(
         namespace='default',
         image="ubuntu:16.04",
@@ -48,7 +56,10 @@ try:
         in_cluster=False,
         task_id="task",
         get_logs=True,
-        dag=dag)
+        dag=dag,
+        is_delete_operator_pod=False,
+        tolerations=tolerations
+    )
 
 except ImportError as e:
     log.warn("Could not import KubernetesPodOperator: " + str(e))
