@@ -49,7 +49,7 @@ class WorkerConfiguration(LoggingMixin):
             'value': self.kube_config.git_branch
         }, {
             'name': 'GIT_SYNC_ROOT',
-            'value': '/tmp'
+            'value': '/root/airflow'
         }, {
             'name': 'GIT_SYNC_DEST',
             'value': 'dags'
@@ -80,7 +80,6 @@ class WorkerConfiguration(LoggingMixin):
     def _get_environment(self):
         """Defines any necessary environment variables for the pod executor"""
         env = {
-            'AIRFLOW__CORE__DAGS_FOLDER': '/tmp/dags',
             'AIRFLOW__CORE__EXECUTOR': 'LocalExecutor'
         }
         if self.kube_config.airflow_configmap:
@@ -103,52 +102,16 @@ class WorkerConfiguration(LoggingMixin):
         return self.kube_config.image_pull_secrets.split(',')
 
     def init_volumes_and_mounts(self):
-        dags_volume_name = 'airflow-dags'
-        logs_volume_name = 'airflow-logs'
-
-        def _construct_volume(name, claim, subpath=None):
-            vo = {
-                'name': name
-            }
-            if claim:
-                vo['persistentVolumeClaim'] = {
-                    'claimName': claim
-                }
-                if subpath:
-                    vo['subPath'] = subpath
-            else:
-                vo['emptyDir'] = {}
-            return vo
+        root_volume_name = 'airflow-root'
 
         volumes = [
-            _construct_volume(
-                dags_volume_name,
-                self.kube_config.dags_volume_claim,
-                self.kube_config.dags_volume_subpath
-            ),
-            _construct_volume(
-                logs_volume_name,
-                self.kube_config.logs_volume_claim,
-                self.kube_config.logs_volume_subpath
-            )
+            {'name': root_volume_name, 'emptyDir': {}}
         ]
 
-        dag_volume_mount_path = ""
-        if self.kube_config.dags_volume_claim:
-            dag_volume_mount_path = self.worker_airflow_dags
-        else:
-            dag_volume_mount_path = os.path.join(
-                self.worker_airflow_dags,
-                self.kube_config.git_subpath
-            )
-
         volume_mounts = [{
-            'name': dags_volume_name,
-            'mountPath': dag_volume_mount_path,
-            'readOnly': True
-        }, {
-            'name': logs_volume_name,
-            'mountPath': self.worker_airflow_logs
+            'name': root_volume_name,
+            'mountPath': '/root/airflow',
+            'readOnly': False
         }]
 
         # Mount the airflow.cfg file via a configmap the user has specified
@@ -173,8 +136,11 @@ class WorkerConfiguration(LoggingMixin):
     def make_pod(self, namespace, worker_uuid, pod_id, dag_id, task_id, execution_date,
                  airflow_command, kube_executor_config):
         volumes, volume_mounts = self.init_volumes_and_mounts()
-        worker_init_container_spec = self._get_init_containers(
-            copy.deepcopy(volume_mounts))
+        worker_init_container_spec = self._get_init_containers([{
+            'name': 'airflow-root',
+            'mountPath': '/root/airflow',
+            'readOnly': False
+        }])
         resources = Resources(
             request_memory=kube_executor_config.request_memory,
             request_cpu=kube_executor_config.request_cpu,
