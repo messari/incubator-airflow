@@ -176,6 +176,7 @@ class KubernetesPodOperator(BaseOperator):
         self.annotations = annotations or {}
         self.affinity = affinity or {}
         self.xcom_push = xcom_push
+        self.node_selectors = node_selectors
         self.resources = resources or Resources()
         self.config_file = config_file
         self.image_pull_secrets = image_pull_secrets
