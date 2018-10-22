@@ -85,7 +85,7 @@ class KubernetesRequestFactory:
 
     @staticmethod
     def extract_node_selector(pod, req):
-        if len(pod.node_selectors) > 0:
+        if pod.node_selectors and len(pod.node_selectors) > 0:
             req['spec']['nodeSelector'] = pod.node_selectors
 
     @staticmethod
