@@ -41,8 +41,8 @@ RUN pip install --upgrade pip
 RUN pip install -U setuptools && \
     pip install kubernetes && \
     pip install cryptography && \
-    pip install psycopg2-binary==2.7.4  # I had issues with older versions of psycopg2, just a warning
-
+    pip install apache-airflow[s3] && \
+    pip install psycopg2-binary==2.7.4 # I had issues with older versions of psycopg2, just a warning
 # install airflow
 COPY airflow.tar.gz /tmp/airflow.tar.gz
 RUN pip install /tmp/airflow.tar.gz
